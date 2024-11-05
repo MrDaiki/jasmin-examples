@@ -1,0 +1,135 @@
+inline fn min3(reg u64 a, reg u64 b, reg u64 c) -> reg u64 {
+    reg u64 r;
+    
+    r = a;
+    r = b if a > b;
+    r = c if r > c;
+    return r;
+}
+
+
+inline fn next(reg u64 target, reg u64 size) -> reg u64 {
+    reg u64 v ;
+    v = target;
+    v+=1;
+
+    if (v >= size) {
+        v = 0;
+    }
+
+    return v;
+}
+
+inline fn prev(reg u64 target, reg u64 size) -> reg u64 {
+    reg u64 v;
+    v = target;
+    v-=1;
+
+    if (v <s 0) {
+        v = size;
+        v -= 1;
+    }
+    return v;
+}
+
+
+export fn levenshtein(
+        reg u64 buffer, 
+        reg u64 s1, 
+        reg u64 s2, 
+        reg u64 s1_size, 
+        reg u64 s2_size
+    ) ->  reg u64 {
+    
+    reg u64 buffer_size;
+    buffer_size = s2_size;
+    buffer_size += 2;
+
+    reg u64 i;
+    reg u64 j;
+    i = 0;
+    
+    while (i < buffer_size) {
+        (u64)[buffer + 8*i] = i;
+        i += 1;
+    }
+
+    i+=1;
+    [buffer + 8*(buffer_size-1)] = 1;   
+
+
+    reg u64 tp ;
+    reg u64 tn ;
+    reg u64 target ;
+    reg u64 cost ;
+
+
+    reg u8 s1_v; 
+    reg u8 s2_v; 
+
+    reg u64 x10 ;
+    reg u64 x01;
+    reg u64 x11 ;
+
+    reg u64 value;
+    reg u64 result;
+
+    target = 0;
+
+    i=0;
+
+    reg u64 s1_m;
+    s1_m = s1_size;
+    
+    s1_m -= 1;
+
+    while (i < s1_size) {
+        j=0;
+
+        while (j < s2_size) {
+            
+            tp = prev(target, buffer_size);
+            tn = next(target, buffer_size);
+
+            cost = 0;
+
+            s1_v = (u8)[s1 + i];
+            s2_v = (u8)[s2 + j];
+
+            if (s1_v != s2_v) {
+                cost = 1;
+            }
+
+            x10 = [buffer + 8*tp];
+            x10 += 1;
+
+            x01 = [buffer + 8*tn];
+            x01 += 1;
+
+            x11 = [buffer + 8*target];
+            x11 += cost;
+
+            result = min3(x10, x01, x11);
+            [buffer+target*8] = result;
+
+            target = next(target, buffer_size);
+            j += 1;
+        }
+
+        if (i < s1_m) {
+            value = i;
+            value += 2;
+            [buffer +target*8] = value;
+            target = next(target, buffer_size);
+
+        }
+
+        i += 1;
+
+    }
+
+    result = [buffer + 8*target];
+
+    return result;
+
+}
