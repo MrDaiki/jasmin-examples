@@ -14,7 +14,7 @@ def p_matrix(t,n,m):
         print(stack)
 
 def load():
-    lib = ctypes.cdll.LoadLibrary("./lev.so")
+    lib = ctypes.cdll.LoadLibrary("./levenshtein/levenshtein.so")
     
     long_ptr_sig = ctypes.POINTER(ctypes.c_long)
     char_ptr_sig = ctypes.POINTER(ctypes.c_char)

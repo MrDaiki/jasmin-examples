@@ -1,127 +1,96 @@
 
-
-param int tab_size = 4096;
-
-fn flag3 (
-    reg mut ptr u64[tab_size] tab, 
-    reg u64 start,
-    reg u64 end, 
-    reg u64 pivot
-) -> reg mut ptr u64[tab_size] {
-
-    reg u64 bellow_start = start;
-    reg u64 upper_start = end;
-
-    reg u64 i = start;
-    while (i < upper_start) {
-
-        reg u64 current_value = tab[i];
-        if (current_value < pivot) {
-            reg u64 store = tab[bellow_start];
-            tab[bellow_start] = current_value;
-            tab[i] = store;
-            bellow_start +=1;
-            i+=1;
-        }
-
-        else if (current_value == pivot ) {
-            i+=1;
-        }
-
-        else {
-            upper_start -=1;
-            reg u64 store = tab[upper_start];
-            tab[upper_start] = current_value;
-            tab[i] = store;
-        }
-
-    }
-
-    return tab;
-
+inline fn swap(
+    reg u64 arr,
+    reg u64 i,
+    reg u64 j
+) {
+    reg u64 tmp;
+    tmp = [arr + 8*i];
+    [arr + 8*i] = [arr + 8*j];
+    [arr + 8*j] = tmp;
 }
 
-fn lower_bound(
-    reg ptr u64[tab_size] tab, 
-    reg u64 start,
-    reg u64 end, 
-    reg u64 pivot
-) -> reg u64 {
-    reg u64 i = start;
+
+inline fn push_limits(
+    reg u64 buffer, 
+    reg u64 lower, 
+    reg u64 upper,
+    reg u64 head
+    ) -> reg u64 {
+        [buffer + 8*head] = lower;
+        [buffer + 8*(head+1)] = upper;
+        head += 2;
+        return head;
+}
+
+inline fn pop_limits(
+    reg u64 buffer, 
+    reg u64 head
+    ) -> reg u64,reg u64,reg u64 {
+        reg u64 lower,upper;
+        upper = [buffer + 8*(head-1)];
+        lower = [buffer + 8*(head-2)];
+        head-=2;
+        return head,lower,upper;
+}
+
+
+inline fn three_flags(
+    reg u64 arr,
+    reg u64 lower,
+    reg u64 upper
+) -> reg u64, reg u64{
+    reg u64 pivot; 
+    pivot = [arr + 8*lower];
     
-    while (i < end && tab[i] < pivot) {
-        i+=1;
+    reg u64 lv,mv,uv;
+    lv = lower;
+    mv = lower;
+    uv = upper;
+
+    while (mv <= uv) {
+        reg u64 val;
+        val = [arr + 8*mv];
+        if (val < pivot) {
+            swap(arr,lv,mv);
+            lv += 1;
+            mv += 1;
+        } else if (val == pivot) {
+            mv += 1;
+        } else {
+            swap(arr,mv,uv);
+            uv -= 1;
+        }
     }
 
-    return i;
-}
-
-fn upper_bound(
-    reg ptr u64[tab_size] tab,
-    reg u64 start,
-    reg u64 end,
-    reg u64 pivot
-) -> reg u64 {  
-    reg u64 i = end;
-
-    while (i > start && tab[i] > pivot) {
-        i-=1;
-    }
-
-    return i;
-
-}
-
-fn knuth_shuffle(
-    reg ptr u64[tab_size] tab,
-    reg u64 size
-)
--> reg ptr u64[tab_size]
-{
-    reg u64 i = 0;
-    reg u64[tab_size] tab_c;
-    tab_c = #randombytes(tab_c);
-
-    while (i < size) {
-
-        reg u64 j = tab_c[i];
-        j = j % (size - i);
-        reg u64 store = tab[i];
-        tab[i] = tab[j];
-        tab[j] = store;
-        i+=1;
-
-    }
-    return tab;
-}
-
-
-fn sub_quicksort (
-    reg ptr u64[tab_size] tab, 
-    reg u64 start,
-    reg u64 end
-) -> reg ptr u64[tab_size] {
-
-   if (end - start <= 1) {
-    reg u64 pivot = tab[start];
-
-    reg ptr u64[tab_size] tab_c = flag3(tab,start,end,pivot);
-
-    reg u64 lb = lower_bound(tab,start,end,pivot);
-    reg u64 ub = upper_bound(tab,start,end,pivot);
-
-    tab_c = sub_quicksort(tab_c,start,lb);
-    tab = sub_quicksort(tab_c,ub,end);
-   }
-    return tab;
-
+    return lv,mv;
 }
 
 export fn quicksort (
-    reg ptr u64[tab_size] tab,
+    reg u64 buffer,
+    reg u64 tab,
     reg u64 size
-) -> reg ptr u64[tab_size] {
-    tab = knuth_shuffle(tab,size);
-    tab = sub_quicksort(tab,0,size);
-    return tab;
+) {
+    reg u64 stack_head;
+
+    //push initial limits of the algorithm
+    stack_head = 0;
+    stack_head = push_limits(buffer,0,size-1,stack_head);
+
+    while (stack_head > 0) {
+        reg u64 lower,upper;
+        stack_head,lower,upper = pop_limits(buffer,stack_head);
+
+        if (lower < upper) {
+            
+            reg u64 lv,mv;
+
+            lv,mv = three_flags(tab,lower,upper);
+
+            stack_head = push_limits(buffer,lower,lv,stack_head);
+            stack_head = push_limits(buffer,mv,upper,stack_head);
+        }
+    }
+
+ 
 }
