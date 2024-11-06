@@ -14,7 +14,7 @@ def p_matrix(t,n,m):
         print(stack)
 
 def load():
-    lib = ctypes.cdll.LoadLibrary("./levenshtein/levenshtein.so")
+    lib = ctypes.cdll.LoadLibrary("./build/levenshtein/levenshtein.so")
     
     long_ptr_sig = ctypes.POINTER(ctypes.c_long)
     char_ptr_sig = ctypes.POINTER(ctypes.c_char)
@@ -113,12 +113,14 @@ def levenshtein_distance_optimised(s1,s2):
     lev_distance = lib.levenshtein(t,s1_t,s2_t,s1_cs,s2_cs)
     return lev_distance
 
-s1 = "niche"
-s2 = "chiens"
 
-d = levenshtein_distance_optimised(s1,s2)
-d_ref = lev(s1,s2)
+if __name__ == "__main__":
+    s1 = "niche"
+    s2 = "chiens"
 
-print(f"Jasmin implementation :\t\t {d}\nReference implementation :\t {d_ref}")
+    d = levenshtein_distance_optimised(s1,s2)
+    d_ref = lev(s1,s2)
 
-#TODO : Add multiple tests cases to check the correctness of the implementation
+    print(f"Jasmin implementation :\t\t {d}\nReference implementation :\t {d_ref}")
+
+    #TODO : Add multiple tests cases to check the correctness of the implementation

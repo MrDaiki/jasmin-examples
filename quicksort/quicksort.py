@@ -2,7 +2,7 @@ import ctypes
 import random
 
 def load():
-    lib = ctypes.cdll.LoadLibrary("./quicksort/quicksort.so")
+    lib = ctypes.cdll.LoadLibrary("./build/quicksort/quicksort.so")
     
     long_ptr_sig = ctypes.POINTER(ctypes.c_long)
     long_sig = ctypes.c_long
@@ -34,4 +34,13 @@ def quicksort(arr):
     lib.quicksort(buff,arr,n)
     return list(arr)
 
-print(quicksort([3,2,1,4,5,6,7,8,9,0]))
+def check_sorted(arr):
+    for i in range(1,len(arr)):
+        if arr[i] < arr[i-1]:
+            return False
+    return True
+
+
+if __name__ == "__main__":
+    arg = [i for i in range(100)]
+    print(f"Test array sort : {check_sorted(quicksort(arg))}")
